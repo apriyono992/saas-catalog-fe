@@ -1,0 +1,120 @@
+import { useState, type FormEvent } from 'react'
+import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
+import { Menu, Search } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { ThemeToggle } from '@/components/layout/theme-toggle'
+import { useStoreProfileQuery } from '@/features/store/shared/api/store-profile.queries'
+import { cn } from '@/lib/utils'
+
+const NAV_LINKS = [
+  { to: '/', label: 'Home', end: true },
+  { to: '/catalog', label: 'Catalog', end: false },
+  { to: '/about', label: 'About', end: false },
+]
+
+function NavLinks({ onNavigate, className }: { onNavigate?: () => void; className?: string }) {
+  return (
+    <>
+      {NAV_LINKS.map((link) => (
+        <NavLink
+          key={link.to}
+          to={link.to}
+          end={link.end}
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            cn(
+              'rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
+              isActive && 'text-foreground',
+              className
+            )
+          }
+        >
+          {link.label}
+        </NavLink>
+      ))}
+    </>
+  )
+}
+
+export function StoreLayout() {
+  const profileQuery = useStoreProfileQuery()
+  const navigate = useNavigate()
+  const [search, setSearch] = useState('')
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const storeName = profileQuery.data?.name ?? 'Store'
+
+  function handleSearchSubmit(event: FormEvent, closeSheet?: boolean) {
+    event.preventDefault()
+    navigate(search.trim() ? `/catalog?search=${encodeURIComponent(search.trim())}` : '/catalog')
+    if (closeSheet) setMobileNavOpen(false)
+  }
+
+  return (
+    <div className="flex min-h-svh flex-col">
+      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+        <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
+          <Link to="/" className="shrink-0 truncate text-base font-semibold tracking-tight">
+            {storeName}
+          </Link>
+
+          <nav className="hidden items-center gap-1 md:flex">
+            <NavLinks />
+          </nav>
+
+          <form
+            onSubmit={handleSearchSubmit}
+            className="relative ml-auto hidden w-full max-w-xs md:block"
+          >
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search products…"
+              className="pl-8"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </form>
+
+          <ThemeToggle />
+
+          <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon" className="ml-auto md:hidden" aria-label="Open menu">
+                <Menu className="size-4" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-72">
+              <div className="flex flex-col gap-4 p-4">
+                <form onSubmit={(e) => handleSearchSubmit(e, true)} className="relative">
+                  <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    placeholder="Search products…"
+                    className="pl-8"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                </form>
+                <nav className="flex flex-col gap-1">
+                  <NavLinks onNavigate={() => setMobileNavOpen(false)} className="px-3 py-2" />
+                </nav>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+      </header>
+
+      <main className="flex-1">
+        <Outlet />
+      </main>
+
+      <footer className="border-t border-border py-8">
+        <div className="mx-auto max-w-6xl px-4 text-sm text-muted-foreground">
+          © {new Date().getFullYear()} {storeName}. All rights reserved.
+        </div>
+      </footer>
+    </div>
+  )
+}
