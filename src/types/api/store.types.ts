@@ -6,6 +6,13 @@ export interface StoreCategoryRef {
   slug: string
 }
 
+export interface CategoryListItem {
+  id: string
+  name: string
+  slug: string
+  imageUrl: string | null
+}
+
 export interface StoreProfile {
   name: string
   description: string | null

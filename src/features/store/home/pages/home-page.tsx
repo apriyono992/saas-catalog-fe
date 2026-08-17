@@ -4,12 +4,35 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/common/error-state'
 import { ProductGrid } from '@/features/store/shared/components/product-grid'
+import { CategoryGrid } from '@/features/store/shared/components/category-grid'
 import {
   useStorePopularProductsQuery,
   useStoreProductsQuery,
 } from '@/features/store/catalog/api/catalog.queries'
+import { useStoreCategoriesQuery } from '@/features/store/category/api/categories.queries'
 import { useStoreProfileQuery } from '@/features/store/shared/api/store-profile.queries'
-import type { ProductListItem } from '@/types/api/store.types'
+import type { CategoryListItem, ProductListItem } from '@/types/api/store.types'
+
+function CategorySection({
+  categories,
+  isPending,
+  isError,
+  onRetry,
+}: {
+  categories: CategoryListItem[]
+  isPending: boolean
+  isError: boolean
+  onRetry: () => void
+}) {
+  if (!isPending && !isError && categories.length === 0) return null
+
+  return (
+    <section className="mx-auto max-w-6xl px-4 py-12">
+      <h2 className="mb-6 text-xl font-semibold tracking-tight">Kategori</h2>
+      {isError ? <ErrorState onRetry={onRetry} /> : <CategoryGrid categories={categories} isLoading={isPending} />}
+    </section>
+  )
+}
 
 function ProductSection({
   title,
@@ -41,6 +64,7 @@ export default function HomePage() {
   const profileQuery = useStoreProfileQuery()
   const productsQuery = useStoreProductsQuery({ page: 1, limit: 8 })
   const popularQuery = useStorePopularProductsQuery(8)
+  const categoriesQuery = useStoreCategoriesQuery()
 
   return (
     <div>
@@ -67,6 +91,12 @@ export default function HomePage() {
         </div>
       </section>
 
+      <CategorySection
+        categories={categoriesQuery.data ?? []}
+        isPending={categoriesQuery.isPending}
+        isError={categoriesQuery.isError}
+        onRetry={() => categoriesQuery.refetch()}
+      />
       <ProductSection
         title="New arrivals"
         products={productsQuery.data?.data ?? []}
