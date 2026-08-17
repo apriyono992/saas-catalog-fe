@@ -17,8 +17,21 @@ export default defineConfig(({ mode }) => {
     },
     server: {
       proxy: {
-        '/store': apiTarget,
-        '/cms': apiTarget,
+        // /store and /cms are also used as frontend shell-switch paths (see shell-resolver.ts),
+        // so browser page navigations (Accept: text/html) bypass the proxy and let Vite serve
+        // the SPA instead — only actual API calls from the app get forwarded to the backend.
+        '/store': {
+          target: apiTarget,
+          bypass(req) {
+            if (req.headers.accept?.includes('html')) return '/index.html'
+          },
+        },
+        '/cms': {
+          target: apiTarget,
+          bypass(req) {
+            if (req.headers.accept?.includes('html')) return '/index.html'
+          },
+        },
         '/health': apiTarget,
         '/uploads': apiTarget,
       },

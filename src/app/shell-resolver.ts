@@ -6,12 +6,26 @@ function isShell(value: string | null): value is Shell {
   return value === 'store' || value === 'cms'
 }
 
+function stripDevShellPathPrefix(shell: Shell) {
+  const { pathname, search, hash } = window.location
+  const rest = pathname.slice(`/${shell}`.length) || '/'
+  window.history.replaceState(null, '', `${rest}${search}${hash}`)
+}
+
 function resolveDevShell(): Shell {
   const queryShell = new URLSearchParams(window.location.search).get('shell')
 
   if (isShell(queryShell)) {
     localStorage.setItem(DEV_SHELL_STORAGE_KEY, queryShell)
     return queryShell
+  }
+
+  // e.g. http://localhost:5173/cms — friendlier than ?shell=cms for non-technical testers.
+  const pathShell = window.location.pathname.split('/')[1]
+  if (isShell(pathShell)) {
+    localStorage.setItem(DEV_SHELL_STORAGE_KEY, pathShell)
+    stripDevShellPathPrefix(pathShell)
+    return pathShell
   }
 
   const stored = localStorage.getItem(DEV_SHELL_STORAGE_KEY)
