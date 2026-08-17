@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react'
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom'
-import { Menu, Search } from 'lucide-react'
+import { Heart, Menu, Search } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { useStoreProfileQuery } from '@/features/store/shared/api/store-profile.queries'
+import { useFavoritesStore } from '@/stores/favorites-store'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
@@ -57,6 +58,7 @@ export function StoreLayout() {
   const [search, setSearch] = useState('')
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const storeName = profileQuery.data?.name ?? 'Store'
+  const favoriteCount = useFavoritesStore((s) => s.ids.length)
 
   function handleSearchSubmit(event: FormEvent, closeSheet?: boolean) {
     event.preventDefault()
@@ -92,6 +94,17 @@ export function StoreLayout() {
               onChange={(e) => setSearch(e.target.value)}
             />
           </form>
+
+          <Button variant="outline" size="icon" asChild className="relative shrink-0">
+            <Link to="/favorites" aria-label="Favorites">
+              <Heart className="size-4" />
+              {favoriteCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex size-4 items-center justify-center rounded-full bg-primary text-[10px] font-medium text-primary-foreground">
+                  {favoriteCount}
+                </span>
+              )}
+            </Link>
+          </Button>
 
           <ThemeToggle />
 

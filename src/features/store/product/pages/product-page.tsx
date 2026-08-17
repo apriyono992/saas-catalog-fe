@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { ImageOff, ExternalLink } from 'lucide-react'
+import { ImageOff, ExternalLink, Heart } from 'lucide-react'
 import { ErrorState } from '@/components/common/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,8 @@ import {
 import { resolveAssetUrl } from '@/lib/resolve-asset-url'
 import { formatCurrency } from '@/utils/format-currency'
 import { getApiErrorMessage } from '@/services/http/error'
+import { useFavoritesStore } from '@/stores/favorites-store'
+import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 
 export default function ProductPage() {
@@ -22,6 +24,8 @@ export default function ProductPage() {
   const relatedQuery = useRelatedProductsQuery(slug)
   const redirectMutation = useMarketplaceRedirectMutation()
   const [activeImage, setActiveImage] = useState(0)
+  const favorited = useFavoritesStore((s) => (productQuery.data ? s.ids.includes(productQuery.data.id) : false))
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite)
 
   if (productQuery.isPending) {
     return (
@@ -100,7 +104,19 @@ export default function ProductPage() {
               {product.category.name}
             </Badge>
           )}
-          <h1 className="text-3xl font-semibold tracking-tight">{product.name}</h1>
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight">{product.name}</h1>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
+              aria-pressed={favorited}
+              onClick={() => toggleFavorite(product.id)}
+              className="shrink-0"
+            >
+              <Heart className={cn('size-4', favorited && 'fill-destructive text-destructive')} />
+            </Button>
+          </div>
           <p className="mt-2 text-xl text-muted-foreground">{formatCurrency(product.basePrice)}</p>
 
           {product.description && <p className="mt-4 text-sm leading-relaxed">{product.description}</p>}

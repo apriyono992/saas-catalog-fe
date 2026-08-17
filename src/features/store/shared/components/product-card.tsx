@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
-import { ImageOff } from 'lucide-react'
+import { Heart, ImageOff } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { resolveAssetUrl } from '@/lib/resolve-asset-url'
 import { formatCurrency } from '@/utils/format-currency'
+import { useFavoritesStore } from '@/stores/favorites-store'
+import { cn } from '@/lib/utils'
 import type { ProductListItem } from '@/types/api/store.types'
 
 // TEMP: placeholder until the API exposes stock data.
@@ -16,6 +18,8 @@ function getPlaceholderMeta(id: string) {
 
 export function ProductCard({ product }: { product: ProductListItem }) {
   const meta = getPlaceholderMeta(product.id)
+  const favorited = useFavoritesStore((s) => s.ids.includes(product.id))
+  const toggleFavorite = useFavoritesStore((s) => s.toggleFavorite)
 
   return (
     <Card className="h-full overflow-hidden py-0 transition-shadow hover:shadow-md">
@@ -38,6 +42,19 @@ export function ProductCard({ product }: { product: ProductListItem }) {
             <Badge className="bg-foreground text-background">Sold out</Badge>
           </div>
         )}
+        <button
+          type="button"
+          aria-label={favorited ? 'Remove from favorites' : 'Add to favorites'}
+          aria-pressed={favorited}
+          onClick={(e) => {
+            e.preventDefault()
+            e.stopPropagation()
+            toggleFavorite(product.id)
+          }}
+          className="absolute top-2 right-2 flex size-7 items-center justify-center rounded-full bg-background/80 text-foreground shadow-sm backdrop-blur transition-colors hover:bg-background"
+        >
+          <Heart className={cn('size-4', favorited && 'fill-destructive text-destructive')} />
+        </button>
       </Link>
       <CardContent className="space-y-1.5 p-3">
         <Link to={`/products/${product.slug}`} className="block truncate font-medium hover:underline">

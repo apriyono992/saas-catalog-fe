@@ -31,6 +31,10 @@ export interface ProductListItem {
   category: StoreCategoryRef | null
 }
 
+export interface PopularProduct extends ProductListItem {
+  clickCount: number
+}
+
 export interface ProductVariantTypeView {
   name: string
   options: string[]

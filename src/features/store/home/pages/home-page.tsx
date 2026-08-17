@@ -5,20 +5,24 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ErrorState } from '@/components/common/error-state'
 import { ProductGrid } from '@/features/store/shared/components/product-grid'
 import {
-  useStoreMostClickedProductsQuery,
+  useStorePopularProductsQuery,
   useStoreProductsQuery,
 } from '@/features/store/catalog/api/catalog.queries'
 import { useStoreProfileQuery } from '@/features/store/shared/api/store-profile.queries'
-import type { UseQueryResult } from '@tanstack/react-query'
-import type { PaginatedResponse } from '@/types/common.types'
 import type { ProductListItem } from '@/types/api/store.types'
 
 function ProductSection({
   title,
-  query,
+  products,
+  isPending,
+  isError,
+  onRetry,
 }: {
   title: string
-  query: UseQueryResult<PaginatedResponse<ProductListItem>>
+  products: ProductListItem[]
+  isPending: boolean
+  isError: boolean
+  onRetry: () => void
 }) {
   return (
     <section className="mx-auto max-w-6xl px-4 py-12">
@@ -28,11 +32,7 @@ function ProductSection({
           View all
         </Link>
       </div>
-      {query.isError ? (
-        <ErrorState onRetry={() => query.refetch()} />
-      ) : (
-        <ProductGrid products={query.data?.data ?? []} isLoading={query.isPending} />
-      )}
+      {isError ? <ErrorState onRetry={onRetry} /> : <ProductGrid products={products} isLoading={isPending} />}
     </section>
   )
 }
@@ -40,7 +40,7 @@ function ProductSection({
 export default function HomePage() {
   const profileQuery = useStoreProfileQuery()
   const productsQuery = useStoreProductsQuery({ page: 1, limit: 8 })
-  const mostClickedQuery = useStoreMostClickedProductsQuery({ page: 1, limit: 8 })
+  const popularQuery = useStorePopularProductsQuery(8)
 
   return (
     <div>
@@ -67,8 +67,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      <ProductSection title="New arrivals" query={productsQuery} />
-      <ProductSection title="Paling banyak diklik" query={mostClickedQuery} />
+      <ProductSection
+        title="New arrivals"
+        products={productsQuery.data?.data ?? []}
+        isPending={productsQuery.isPending}
+        isError={productsQuery.isError}
+        onRetry={() => productsQuery.refetch()}
+      />
+      <ProductSection
+        title="Paling banyak diklik"
+        products={popularQuery.data ?? []}
+        isPending={popularQuery.isPending}
+        isError={popularQuery.isError}
+        onRetry={() => popularQuery.refetch()}
+      />
     </div>
   )
 }

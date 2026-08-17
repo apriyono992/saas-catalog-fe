@@ -1,10 +1,11 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { listStoreProducts } from '@/services/store/products.api'
+import { getPopularProducts, listStoreProducts } from '@/services/store/products.api'
 import type { StoreProductsQuery } from '@/types/api/store.types'
 
 export const storeProductKeys = {
   all: ['store-products'] as const,
   list: (query: StoreProductsQuery) => [...storeProductKeys.all, 'list', query] as const,
+  popular: (limit: number) => [...storeProductKeys.all, 'popular', limit] as const,
 }
 
 export function useStoreProductsQuery(query: StoreProductsQuery) {
@@ -15,13 +16,9 @@ export function useStoreProductsQuery(query: StoreProductsQuery) {
   })
 }
 
-// TEMP: reuses the general product list until a dedicated
-// "most clicked" endpoint exists. Swap listStoreProducts for the
-// real endpoint here once it's available.
-export function useStoreMostClickedProductsQuery(query: StoreProductsQuery) {
+export function useStorePopularProductsQuery(limit = 8) {
   return useQuery({
-    queryKey: [...storeProductKeys.all, 'most-clicked', query] as const,
-    queryFn: () => listStoreProducts(query),
-    placeholderData: keepPreviousData,
+    queryKey: storeProductKeys.popular(limit),
+    queryFn: () => getPopularProducts(limit),
   })
 }
