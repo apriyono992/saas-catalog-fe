@@ -11,7 +11,7 @@ export default function CmsApp() {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/cms">
       <CmsRoutes />
     </BrowserRouter>
   )

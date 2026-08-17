@@ -61,7 +61,7 @@ cmsClient.interceptors.response.use(
       return cmsClient(originalRequest)
     } catch (refreshError) {
       useAuthStore.getState().clearSession()
-      window.location.assign('/login')
+      window.location.assign('/cms/login')
       throw refreshError
     }
   }
