@@ -14,7 +14,15 @@ const NAV_LINKS = [
   { to: '/about', label: 'About', end: false },
 ]
 
-function NavLinks({ onNavigate, className }: { onNavigate?: () => void; className?: string }) {
+function NavLinks({
+  onNavigate,
+  className,
+  tone = 'default',
+}: {
+  onNavigate?: () => void
+  className?: string
+  tone?: 'default' | 'onDark'
+}) {
   return (
     <>
       {NAV_LINKS.map((link) => (
@@ -25,8 +33,13 @@ function NavLinks({ onNavigate, className }: { onNavigate?: () => void; classNam
           onClick={onNavigate}
           className={({ isActive }) =>
             cn(
-              'rounded-md px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground',
-              isActive && 'text-foreground',
+              'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+              tone === 'onDark'
+                ? cn(
+                    'text-white/70 hover:text-white dark:text-muted-foreground dark:hover:text-foreground',
+                    isActive && 'text-white dark:text-foreground'
+                  )
+                : cn('text-muted-foreground hover:text-foreground', isActive && 'text-foreground'),
               className
             )
           }
@@ -53,25 +66,28 @@ export function StoreLayout() {
 
   return (
     <div className="flex min-h-svh flex-col">
-      <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#2d3336] backdrop-blur dark:border-border dark:bg-background/95 dark:supports-backdrop-filter:bg-background/60">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
-          <Link to="/" className="shrink-0 truncate text-base font-semibold tracking-tight">
+          <Link
+            to="/"
+            className="shrink-0 truncate text-base font-semibold tracking-tight text-white dark:text-foreground"
+          >
             {storeName}
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
-            <NavLinks />
+            <NavLinks tone="onDark" />
           </nav>
 
           <form
             onSubmit={handleSearchSubmit}
             className="relative ml-auto hidden w-full max-w-xs md:block"
           >
-            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-white/60 dark:text-muted-foreground" />
             <Input
               type="search"
               placeholder="Search products…"
-              className="pl-8"
+              className="border-white/20 bg-white/10 pl-8 text-white placeholder:text-white/50 focus-visible:border-white/40 dark:border-input dark:bg-input/30 dark:text-foreground dark:placeholder:text-muted-foreground dark:focus-visible:border-ring"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />

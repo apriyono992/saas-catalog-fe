@@ -14,3 +14,14 @@ export function useStoreProductsQuery(query: StoreProductsQuery) {
     placeholderData: keepPreviousData,
   })
 }
+
+// TEMP: reuses the general product list until a dedicated
+// "most clicked" endpoint exists. Swap listStoreProducts for the
+// real endpoint here once it's available.
+export function useStoreMostClickedProductsQuery(query: StoreProductsQuery) {
+  return useQuery({
+    queryKey: [...storeProductKeys.all, 'most-clicked', query] as const,
+    queryFn: () => listStoreProducts(query),
+    placeholderData: keepPreviousData,
+  })
+}
