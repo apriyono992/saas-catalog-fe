@@ -1,7 +1,8 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, FolderTree } from 'lucide-react'
+import { Plus, Pencil, Trash2, FolderTree, Image as ImageIcon } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
@@ -11,20 +12,33 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useCategoriesQuery, useDeleteCategoryMutation } from '@/features/admin/categories/api/categories.queries'
-import { CategoryFormDialog } from '@/features/admin/categories/components/category-form-dialog'
+import { resolveAssetUrl } from '@/lib/resolve-asset-url'
 import type { Category } from '@/types/api/category.types'
 
 export default function CategoriesPage() {
+  const navigate = useNavigate()
   const categoriesQuery = useCategoriesQuery()
   const deleteMutation = useDeleteCategoryMutation()
 
-  const [formState, setFormState] = useState<{ open: boolean; category: Category | null }>({
-    open: false,
-    category: null,
-  })
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
 
   const columns: ColumnDef<Category>[] = [
+    {
+      id: 'image',
+      header: '',
+      cell: ({ row }) =>
+        row.original.imageUrl ? (
+          <img
+            src={resolveAssetUrl(row.original.imageUrl)}
+            alt=""
+            className="size-8 rounded object-cover"
+          />
+        ) : (
+          <div className="flex size-8 items-center justify-center rounded bg-muted text-muted-foreground">
+            <ImageIcon className="size-4" />
+          </div>
+        ),
+    },
     { accessorKey: 'name', header: 'Name' },
     {
       accessorKey: 'slug',
@@ -45,7 +59,7 @@ export default function CategoriesPage() {
             variant="ghost"
             size="icon-sm"
             aria-label="Edit category"
-            onClick={() => setFormState({ open: true, category: row.original })}
+            onClick={() => navigate(`/categories/${row.original.id}`)}
           >
             <Pencil className="size-4" />
           </Button>
@@ -68,7 +82,7 @@ export default function CategoriesPage() {
         title="Categories"
         description="Organize your products into categories."
         action={
-          <Button onClick={() => setFormState({ open: true, category: null })}>
+          <Button onClick={() => navigate('/categories/new')}>
             <Plus className="size-4" />
             New category
           </Button>
@@ -88,7 +102,7 @@ export default function CategoriesPage() {
               title="No categories yet"
               description="Create your first category to start organizing products."
               action={
-                <Button size="sm" onClick={() => setFormState({ open: true, category: null })}>
+                <Button size="sm" onClick={() => navigate('/categories/new')}>
                   <Plus className="size-4" />
                   New category
                 </Button>
@@ -97,12 +111,6 @@ export default function CategoriesPage() {
           }
         />
       )}
-
-      <CategoryFormDialog
-        open={formState.open}
-        onOpenChange={(open) => setFormState((s) => ({ ...s, open }))}
-        category={formState.category}
-      />
 
       <ConfirmDialog
         open={!!deleteTarget}

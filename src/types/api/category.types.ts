@@ -3,6 +3,7 @@ export interface Category {
   tenantId: string
   name: string
   slug: string
+  imageUrl: string | null
   createdAt: string
   updatedAt: string
 }

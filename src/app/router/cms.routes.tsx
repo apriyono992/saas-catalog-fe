@@ -11,6 +11,8 @@ import { getRoleLandingRoute } from '@/lib/role-routes'
 const LoginPage = lazy(() => import('@/features/admin/auth/pages/login-page'))
 const DashboardPage = lazy(() => import('@/features/admin/dashboard/pages/dashboard-page'))
 const CategoriesPage = lazy(() => import('@/features/admin/categories/pages/categories-page'))
+const CategoryNewPage = lazy(() => import('@/features/admin/categories/pages/category-new-page'))
+const CategoryEditPage = lazy(() => import('@/features/admin/categories/pages/category-edit-page'))
 const ProductsPage = lazy(() => import('@/features/admin/products/pages/products-page'))
 const ProductNewPage = lazy(() => import('@/features/admin/products/pages/product-new-page'))
 const ProductEditPage = lazy(() => import('@/features/admin/products/pages/product-edit-page'))
@@ -48,6 +50,8 @@ export function CmsRoutes() {
             <Route path="/products/new" element={<ProductNewPage />} />
             <Route path="/products/:id" element={<ProductEditPage />} />
             <Route path="/categories" element={<CategoriesPage />} />
+            <Route path="/categories/new" element={<CategoryNewPage />} />
+            <Route path="/categories/:id" element={<CategoryEditPage />} />
             <Route path="/domains" element={<DomainsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
