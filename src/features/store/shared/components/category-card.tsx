@@ -31,7 +31,9 @@ export function CategoryCard({ category }: { category: CategoryListItem }) {
             {category.name}
           </p>
           <p className="text-[11px] sm:text-xs text-muted-foreground font-medium">
-            Jelajahi produk
+            {typeof category.productCount === 'number'
+              ? `${category.productCount} Produk`
+              : 'Jelajahi produk'}
           </p>
         </div>
       </div>

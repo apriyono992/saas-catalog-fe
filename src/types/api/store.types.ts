@@ -13,6 +13,7 @@ export interface CategoryListItem {
   imageUrl: string | null
   parentId: string | null
   childrenCount?: number
+  productCount?: number
 }
 
 export interface StoreCategoryDetail {
@@ -22,8 +23,9 @@ export interface StoreCategoryDetail {
   imageUrl: string | null
   parentId: string | null
   depth: number
+  productCount?: number
   ancestors: { id: string; name: string; slug: string }[]
-  children: { id: string; name: string; slug: string; imageUrl: string | null }[]
+  children: { id: string; name: string; slug: string; imageUrl: string | null; productCount?: number }[]
 }
 
 export interface StoreProfile {

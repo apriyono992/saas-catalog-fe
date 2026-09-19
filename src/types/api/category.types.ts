@@ -5,6 +5,7 @@ export interface Category {
   slug: string
   imageUrl: string | null
   parentId: string | null
+  productCount?: number
   parent?: { id: string; name: string; slug: string } | null
   children?: Category[]
   createdAt: string

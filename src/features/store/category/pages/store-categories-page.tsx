@@ -3,7 +3,6 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ChevronRight, FolderTree, ImageOff } from 'lucide-react'
 import { ErrorState } from '@/components/common/error-state'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Badge } from '@/components/ui/badge'
 import { useStoreCategoriesQuery } from '@/features/store/category/api/categories.queries'
 import { resolveAssetUrl } from '@/lib/resolve-asset-url'
 import type { CategoryListItem } from '@/types/api/store.types'
@@ -105,11 +104,17 @@ export default function StoreCategoriesPage() {
                     >
                       {root.name}
                     </Link>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {root.children.length > 0
-                        ? `${root.children.length} subkategori tersedia`
-                        : 'Kategori utama'}
-                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground mt-0.5">
+                      <span className="font-semibold text-primary">
+                        {root.productCount ?? 0} Produk
+                      </span>
+                      <span>•</span>
+                      <span>
+                        {root.children.length > 0
+                          ? `${root.children.length} subkategori`
+                          : 'Kategori utama'}
+                      </span>
+                    </div>
                   </div>
                 </div>
 
@@ -127,10 +132,10 @@ export default function StoreCategoriesPage() {
                           className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border border-border/80 bg-muted/40 hover:bg-muted hover:border-primary/50 text-foreground transition-all"
                         >
                           <span>{sub.name}</span>
-                          {sub.children.length > 0 && (
-                            <Badge variant="secondary" className="size-4 p-0 flex items-center justify-center text-[9px] rounded-full">
-                              {sub.children.length}
-                            </Badge>
+                          {typeof sub.productCount === 'number' && sub.productCount > 0 && (
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                              ({sub.productCount})
+                            </span>
                           )}
                         </Link>
                       ))}

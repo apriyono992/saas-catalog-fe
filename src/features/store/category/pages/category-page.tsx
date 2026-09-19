@@ -80,11 +80,18 @@ export default function CategoryPage() {
             </p>
           </div>
 
-          {category?.children && category.children.length > 0 && (
-            <Badge variant="secondary" className="w-fit h-auto py-1 px-3 text-xs">
-              {category.children.length} Subkategori
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {typeof category?.productCount === 'number' && (
+              <Badge variant="outline" className="w-fit h-auto py-1 px-3 text-xs font-semibold text-primary">
+                {category.productCount} Total Produk
+              </Badge>
+            )}
+            {category?.children && category.children.length > 0 && (
+              <Badge variant="secondary" className="w-fit h-auto py-1 px-3 text-xs">
+                {category.children.length} Subkategori
+              </Badge>
+            )}
+          </div>
         </div>
       </div>
 
