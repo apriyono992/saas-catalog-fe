@@ -39,6 +39,14 @@ export interface PlatformStoreSettings {
   cardColor: string | null
   cardSectionColor: string | null
   defaultStrikePercentage: string | null
+  storageDriver?: 'local' | 's3' | null
+  s3Endpoint?: string | null
+  s3Region?: string | null
+  s3Bucket?: string | null
+  s3AccessKeyId?: string | null
+  s3SecretAccessKey?: string | null
+  hasS3SecretAccessKey?: boolean
+  s3PublicUrlBase?: string | null
   createdAt: string
   updatedAt: string
 }
@@ -59,6 +67,13 @@ export interface UpdatePlatformStoreSettingsDto {
   cardColor?: string
   cardSectionColor?: string
   defaultStrikePercentage?: string
+  storageDriver?: 'local' | 's3'
+  s3Endpoint?: string
+  s3Region?: string
+  s3Bucket?: string
+  s3AccessKeyId?: string
+  s3SecretAccessKey?: string
+  s3PublicUrlBase?: string
 }
 
 export interface AdminProfile {

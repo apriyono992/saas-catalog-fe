@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, Globe, Plus, ShieldCheck, Trash2 } from 'lucide-react'
+import { ArrowLeft, Cloud, Globe, Lock, Plus, Server, ShieldCheck, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { z } from 'zod'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -15,12 +15,14 @@ import { ConfirmDialog } from '@/components/common/confirm-dialog'
 import { StatusBadge } from '@/components/common/status-badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Field, FieldGroup, FieldLabel, FieldError } from '@/components/ui/field'
+import { Field, FieldGroup, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { cn } from '@/lib/utils'
 import {
   useTenantDomainsQuery,
   useTenantStoreSettingsQuery,
@@ -101,6 +103,7 @@ export default function TenantDetailPage() {
             <TabsTrigger value="domains">Domains</TabsTrigger>
             <TabsTrigger value="store-settings">Store settings</TabsTrigger>
             <TabsTrigger value="appearance">Appearance</TabsTrigger>
+            <TabsTrigger value="storage">Storage</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="pt-4">
@@ -140,6 +143,12 @@ export default function TenantDetailPage() {
                 }}
                 isDeletingBanner={deleteBannerMutation.isPending}
               />
+            )}
+          </TabsContent>
+
+          <TabsContent value="storage" className="pt-4">
+            {storeSettingsQuery.data && (
+              <StorageSettingsForm id={id!} settings={storeSettingsQuery.data} />
             )}
           </TabsContent>
         </Tabs>
@@ -453,6 +462,216 @@ function StoreSettingsForm({ id, settings }: { id: string; settings: PlatformSto
           {updateMutation.isPending ? 'Saving…' : 'Save'}
         </Button>
       </FieldGroup>
+    </form>
+  )
+}
+
+function StorageSettingsForm({ id, settings }: { id: string; settings: PlatformStoreSettings }) {
+  const [driver, setDriver] = useState<'local' | 's3'>(
+    settings.storageDriver === 's3' ? 's3' : 'local'
+  )
+  const [endpoint, setEndpoint] = useState(settings.s3Endpoint ?? '')
+  const [region, setRegion] = useState(settings.s3Region ?? 'auto')
+  const [bucket, setBucket] = useState(settings.s3Bucket ?? 'catalog')
+  const [accessKeyId, setAccessKeyId] = useState(settings.s3AccessKeyId ?? '')
+  const [secretAccessKey, setSecretAccessKey] = useState('')
+  const [publicUrlBase, setPublicUrlBase] = useState(settings.s3PublicUrlBase ?? '')
+
+  const updateMutation = useUpdateTenantStoreSettingsMutation(id)
+
+  function handleSave(e: React.FormEvent) {
+    e.preventDefault()
+    const dto: UpdatePlatformStoreSettingsDto = {
+      storageDriver: driver,
+      s3Endpoint: endpoint.trim() || undefined,
+      s3Region: region.trim() || undefined,
+      s3Bucket: bucket.trim() || undefined,
+      s3AccessKeyId: accessKeyId.trim() || undefined,
+      s3SecretAccessKey: secretAccessKey.trim() || undefined,
+      s3PublicUrlBase: publicUrlBase.trim() || undefined,
+    }
+    updateMutation.mutate(dto, {
+      onSuccess: () => {
+        toast.success('Pengaturan storage berhasil disimpan')
+        setSecretAccessKey('')
+      },
+    })
+  }
+
+  return (
+    <form className="max-w-2xl space-y-6" noValidate onSubmit={handleSave}>
+      {/* Driver Selection */}
+      <div className="space-y-3">
+        <div>
+          <h3 className="text-base font-semibold text-foreground">Media Storage Driver</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Pilih penyimpanan media upload (gambar produk, kategori, banner) khusus untuk toko ini.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setDriver('local')}
+            className={cn(
+              'flex cursor-pointer flex-col justify-between rounded-xl border p-4 transition-all select-none',
+              driver === 'local'
+                ? 'border-primary bg-primary/5 shadow-xs ring-1 ring-primary'
+                : 'border-border hover:bg-muted/40'
+            )}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-muted text-foreground">
+                <Server className="size-4" />
+              </div>
+              {driver === 'local' && (
+                <Badge variant="outline" className="border-primary text-primary text-[10px]">
+                  Aktif
+                </Badge>
+              )}
+            </div>
+            <div className="mt-3">
+              <p className="font-semibold text-sm text-foreground">Local Server (/uploads)</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Simpan file di direktori server lokal. Tidak memerlukan akun cloud storage.
+              </p>
+            </div>
+          </div>
+
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setDriver('s3')}
+            className={cn(
+              'flex cursor-pointer flex-col justify-between rounded-xl border p-4 transition-all select-none',
+              driver === 's3'
+                ? 'border-primary bg-primary/5 shadow-xs ring-1 ring-primary'
+                : 'border-border hover:bg-muted/40'
+            )}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Cloud className="size-4" />
+              </div>
+              {driver === 's3' && (
+                <Badge variant="outline" className="border-primary text-primary text-[10px]">
+                  Aktif
+                </Badge>
+              )}
+            </div>
+            <div className="mt-3">
+              <p className="font-semibold text-sm text-foreground">Cloudflare R2 / S3</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Object storage cepat, bebas biaya egress bandwidth, dan sangat scalable.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* S3 / Cloudflare R2 Settings Card */}
+      {driver === 's3' && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Kredensial Cloudflare R2 / S3</CardTitle>
+            <CardDescription className="text-xs">
+              Kredensial ini disimpan khusus untuk toko ini dan secret key dienkripsi (AES-256-GCM) di database.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Field>
+              <FieldLabel htmlFor="s3-endpoint">S3 Endpoint (Cloudflare R2)</FieldLabel>
+              <Input
+                id="s3-endpoint"
+                placeholder="https://<account_id>.r2.cloudflarestorage.com"
+                value={endpoint}
+                onChange={(e) => setEndpoint(e.target.value)}
+              />
+              <FieldDescription>
+                Dapatkan endpoint dari Cloudflare Dashboard &gt; R2 Object Storage.
+              </FieldDescription>
+            </Field>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field>
+                <FieldLabel htmlFor="s3-bucket">S3 Bucket Name</FieldLabel>
+                <Input
+                  id="s3-bucket"
+                  placeholder="catalog"
+                  value={bucket}
+                  onChange={(e) => setBucket(e.target.value)}
+                />
+              </Field>
+
+              <Field>
+                <FieldLabel htmlFor="s3-region">S3 Region</FieldLabel>
+                <Input
+                  id="s3-region"
+                  placeholder="auto"
+                  value={region}
+                  onChange={(e) => setRegion(e.target.value)}
+                />
+                <FieldDescription>Gunakan &apos;auto&apos; untuk Cloudflare R2.</FieldDescription>
+              </Field>
+            </div>
+
+            <Field>
+              <FieldLabel htmlFor="s3-access-key">S3 Access Key ID</FieldLabel>
+              <Input
+                id="s3-access-key"
+                placeholder="Masukkan Access Key ID R2..."
+                value={accessKeyId}
+                onChange={(e) => setAccessKeyId(e.target.value)}
+              />
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="s3-secret-key">S3 Secret Access Key</FieldLabel>
+              <Input
+                id="s3-secret-key"
+                type="password"
+                placeholder={
+                  settings.hasS3SecretAccessKey
+                    ? '••••••••••••••••••••'
+                    : 'Masukkan Secret Access Key R2...'
+                }
+                value={secretAccessKey}
+                onChange={(e) => setSecretAccessKey(e.target.value)}
+              />
+              <FieldDescription className="flex items-center gap-1.5 text-xs">
+                <Lock className="size-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                {settings.hasS3SecretAccessKey ? (
+                  <span className="text-emerald-700 dark:text-emerald-400 font-medium">
+                    Secret Access Key tersimpan aman &amp; terenkripsi. Tidak dapat dilihat kembali. Kosongkan jika tidak ingin mengubah.
+                  </span>
+                ) : (
+                  <span>
+                    Secret key dienkripsi dengan AES-256-GCM di server dan tidak akan dapat dilihat kembali setelah disimpan.
+                  </span>
+                )}
+              </FieldDescription>
+            </Field>
+
+            <Field>
+              <FieldLabel htmlFor="s3-public-url">S3 Public URL Base</FieldLabel>
+              <Input
+                id="s3-public-url"
+                placeholder="https://pub-xxxxxx.r2.dev atau https://cdn.toko.com"
+                value={publicUrlBase}
+                onChange={(e) => setPublicUrlBase(e.target.value)}
+              />
+              <FieldDescription>
+                URL public bucket R2 (dari R2 &gt; Settings &gt; Public Access) atau custom domain bucket Anda.
+              </FieldDescription>
+            </Field>
+          </CardContent>
+        </Card>
+      )}
+
+      <Button type="submit" disabled={updateMutation.isPending} className="w-fit">
+        {updateMutation.isPending ? 'Menyimpan…' : 'Simpan Pengaturan Storage'}
+      </Button>
     </form>
   )
 }

@@ -16,6 +16,14 @@ export interface StoreSettings {
   cardColor: string | null
   cardSectionColor: string | null
   defaultStrikePercentage: string | null
+  storageDriver?: 'local' | 's3' | null
+  s3Endpoint?: string | null
+  s3Region?: string | null
+  s3Bucket?: string | null
+  s3AccessKeyId?: string | null
+  s3SecretAccessKey?: string | null
+  hasS3SecretAccessKey?: boolean
+  s3PublicUrlBase?: string | null
   createdAt: string
   updatedAt: string
 }
