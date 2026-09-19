@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { Building2, Pencil, Plus, Ban, CheckCircle2 } from 'lucide-react'
+import { Building2, Plus, Ban, CheckCircle2, Eye } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import type { ColumnDef } from '@tanstack/react-table'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
@@ -22,6 +23,7 @@ export default function TenantsPage() {
   const tenantsQuery = useTenantsQuery()
   const suspendMutation = useSuspendTenantMutation()
   const activateMutation = useActivateTenantMutation()
+  const navigate = useNavigate()
 
   const [formState, setFormState] = useState<{ open: boolean; tenant: Tenant | null }>({
     open: false,
@@ -54,10 +56,10 @@ export default function TenantsPage() {
           <Button
             variant="ghost"
             size="icon-sm"
-            aria-label="Edit tenant"
-            onClick={() => setFormState({ open: true, tenant: row.original })}
+            aria-label="Tenant settings"
+            onClick={() => navigate(`/tenants/${row.original.id}`)}
           >
-            <Pencil className="size-4" />
+            <Eye className="size-4" />
           </Button>
           {row.original.status === 'active' ? (
             <Button

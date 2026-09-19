@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Field, FieldGroup, FieldLabel, FieldError } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import {
@@ -94,9 +95,8 @@ function CreateAdminForm({ onDone }: { onDone: () => void }) {
 
         <Field data-invalid={!!form.formState.errors.password}>
           <FieldLabel htmlFor="admin-password">Password</FieldLabel>
-          <Input
+          <PasswordInput
             id="admin-password"
-            type="password"
             autoComplete="new-password"
             aria-invalid={!!form.formState.errors.password}
             {...form.register('password')}

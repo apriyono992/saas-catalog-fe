@@ -15,6 +15,18 @@ export function updateAdminUser(id: string, dto: UpdateAdminDto) {
   return cmsClient.patch<AdminProfile>(`/cms/platform/users/${id}`, dto).then((res) => res.data)
 }
 
+export function resetAdminPassword(id: string, newPassword: string) {
+  return cmsClient.patch(`/cms/platform/users/${id}/password`, { newPassword })
+}
+
+export function setAdminStatus(id: string, isActive: boolean) {
+  return cmsClient.patch<AdminProfile>(`/cms/platform/users/${id}/status`, { isActive }).then((res) => res.data)
+}
+
+export function deleteAdminUser(id: string) {
+  return cmsClient.delete(`/cms/platform/users/${id}`)
+}
+
 export function disableAdminUser(id: string) {
   return cmsClient.post<AdminProfile>(`/cms/platform/users/${id}/disable`).then((res) => res.data)
 }

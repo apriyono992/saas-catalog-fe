@@ -202,7 +202,7 @@ function ProductRowActions({ product, onDelete }: { product: ProductType; onDele
             Edit
           </DropdownMenuItem>
 
-          {product.status === 'draft' && (
+          {(product.status === 'draft' || product.status === 'archived') && (
             <DropdownMenuItem
               onClick={() =>
                 publishMutation.mutate(undefined, { onSuccess: () => toast.success('Product published') })

@@ -1,5 +1,12 @@
 import { cmsClient } from '@/services/http/cms-client'
-import type { CreateTenantDto, Tenant, UpdateTenantDto } from '@/types/api/platform.types'
+import type {
+  CreateTenantDto,
+  PlatformStoreSettings,
+  Tenant,
+  UpdatePlatformStoreSettingsDto,
+  UpdateTenantDto,
+} from '@/types/api/platform.types'
+import type { Domain } from '@/types/api/domain.types'
 
 export function listTenants() {
   return cmsClient.get<Tenant[]>('/cms/platform/tenants').then((res) => res.data)
@@ -19,4 +26,30 @@ export function suspendTenant(id: string) {
 
 export function activateTenant(id: string) {
   return cmsClient.post<Tenant>(`/cms/platform/tenants/${id}/activate`).then((res) => res.data)
+}
+
+export function getTenantStoreSettings(id: string) {
+  return cmsClient
+    .get<PlatformStoreSettings>(`/cms/platform/tenants/${id}/store-settings`)
+    .then((res) => res.data)
+}
+
+export function updateTenantStoreSettings(id: string, dto: UpdatePlatformStoreSettingsDto) {
+  return cmsClient
+    .patch<PlatformStoreSettings>(`/cms/platform/tenants/${id}/store-settings`, dto)
+    .then((res) => res.data)
+}
+
+export function listTenantDomains(id: string) {
+  return cmsClient.get<Domain[]>(`/cms/platform/tenants/${id}/domains`).then((res) => res.data)
+}
+
+export function createTenantDomain(id: string, hostname: string) {
+  return cmsClient
+    .post<Domain>(`/cms/platform/tenants/${id}/domains`, { hostname })
+    .then((res) => res.data)
+}
+
+export function deleteTenantDomain(tenantId: string, domainId: string) {
+  return cmsClient.delete(`/cms/platform/tenants/${tenantId}/domains/${domainId}`)
 }

@@ -22,6 +22,7 @@ const ProfilePage = lazy(() => import('@/features/admin/profile/pages/profile-pa
 const AnalyticsPage = lazy(() => import('@/features/admin/analytics/pages/analytics-page'))
 const ActivityLogsPage = lazy(() => import('@/features/admin/activity-logs/pages/activity-logs-page'))
 const TenantsPage = lazy(() => import('@/features/admin/tenants/pages/tenants-page'))
+const TenantDetailPage = lazy(() => import('@/features/admin/tenants/pages/tenant-detail-page'))
 const PlatformUsersPage = lazy(() => import('@/features/admin/users/pages/platform-users-page'))
 const CmsNotFoundPage = lazy(() => import('@/features/admin/shared/pages/not-found-page'))
 
@@ -60,6 +61,7 @@ export function CmsRoutes() {
 
           <Route element={<RoleGuard allow={['superadmin']} />}>
             <Route path="/tenants" element={<TenantsPage />} />
+            <Route path="/tenants/:id" element={<TenantDetailPage />} />
             <Route path="/users" element={<PlatformUsersPage />} />
           </Route>
 

@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton'
 import { Field, FieldGroup, FieldLabel, FieldError } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/ui/password-input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -116,9 +117,8 @@ function ChangePasswordCard() {
           <FieldGroup>
             <Field data-invalid={!!form.formState.errors.currentPassword}>
               <FieldLabel htmlFor="current-password">Current password</FieldLabel>
-              <Input
+              <PasswordInput
                 id="current-password"
-                type="password"
                 autoComplete="current-password"
                 aria-invalid={!!form.formState.errors.currentPassword}
                 {...form.register('currentPassword')}
@@ -127,9 +127,8 @@ function ChangePasswordCard() {
             </Field>
             <Field data-invalid={!!form.formState.errors.newPassword}>
               <FieldLabel htmlFor="new-password">New password</FieldLabel>
-              <Input
+              <PasswordInput
                 id="new-password"
-                type="password"
                 autoComplete="new-password"
                 aria-invalid={!!form.formState.errors.newPassword}
                 {...form.register('newPassword')}

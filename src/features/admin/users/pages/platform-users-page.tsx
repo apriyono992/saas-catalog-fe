@@ -1,19 +1,30 @@
 import { useMemo, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { Pencil, Plus, UserX, Users as UsersIcon } from 'lucide-react'
+import { KeyRound, Pencil, Plus, Trash2, Users as UsersIcon } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
 import { EmptyState } from '@/components/common/empty-state'
 import { ErrorState } from '@/components/common/error-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
-import { StatusBadge } from '@/components/common/status-badge'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Field, FieldGroup, FieldLabel, FieldError } from '@/components/ui/field'
+import { PasswordInput } from '@/components/ui/password-input'
 import { AdminUserFormDialog } from '@/features/admin/users/components/admin-user-form-dialog'
-import { useAdminUsersQuery, useDisableAdminUserMutation } from '@/features/admin/users/api/platform-users.queries'
+import {
+  useAdminUsersQuery,
+  useDeleteAdminUserMutation,
+  useResetAdminPasswordMutation,
+  useSetAdminStatusMutation,
+} from '@/features/admin/users/api/platform-users.queries'
 import { useTenantsQuery } from '@/features/admin/tenants/api/tenants.queries'
+import { resetPasswordSchema, type ResetPasswordFormValues } from '@/features/admin/users/user.schema'
 import type { AdminProfile } from '@/types/api/platform.types'
 
 const ALL_TENANTS = 'all'
@@ -22,13 +33,15 @@ export default function PlatformUsersPage() {
   const [tenantFilter, setTenantFilter] = useState(ALL_TENANTS)
   const tenantsQuery = useTenantsQuery()
   const usersQuery = useAdminUsersQuery(tenantFilter === ALL_TENANTS ? undefined : tenantFilter)
-  const disableMutation = useDisableAdminUserMutation()
+  const setStatusMutation = useSetAdminStatusMutation()
+  const deleteMutation = useDeleteAdminUserMutation()
 
   const [formState, setFormState] = useState<{ open: boolean; user: AdminProfile | null }>({
     open: false,
     user: null,
   })
-  const [disableTarget, setDisableTarget] = useState<AdminProfile | null>(null)
+  const [resetTarget, setResetTarget] = useState<AdminProfile | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<AdminProfile | null>(null)
 
   const tenantNameById = useMemo(
     () => new Map(tenantsQuery.data?.map((tenant) => [tenant.id, tenant.name])),
@@ -45,12 +58,26 @@ export default function PlatformUsersPage() {
     {
       accessorKey: 'isActive',
       header: 'Status',
-      cell: ({ row }) =>
-        row.original.isActive ? (
-          <StatusBadge label="Active" variant="success" />
-        ) : (
-          <StatusBadge label="Disabled" variant="destructive" />
-        ),
+      cell: ({ row }) => (
+        <div className="flex items-center gap-2">
+          <Switch
+            checked={row.original.isActive}
+            disabled={setStatusMutation.isPending}
+            onCheckedChange={(checked) =>
+              setStatusMutation.mutate(
+                { id: row.original.id, isActive: checked },
+                {
+                  onSuccess: () =>
+                    toast.success(checked ? 'Admin activated' : 'Admin disabled'),
+                }
+              )
+            }
+          />
+          <span className="text-xs text-muted-foreground">
+            {row.original.isActive ? 'Active' : 'Disabled'}
+          </span>
+        </div>
+      ),
     },
     {
       accessorKey: 'createdAt',
@@ -70,16 +97,22 @@ export default function PlatformUsersPage() {
           >
             <Pencil className="size-4" />
           </Button>
-          {row.original.isActive && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              aria-label="Disable admin"
-              onClick={() => setDisableTarget(row.original)}
-            >
-              <UserX className="size-4" />
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Reset password"
+            onClick={() => setResetTarget(row.original)}
+          >
+            <KeyRound className="size-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            aria-label="Delete admin"
+            onClick={() => setDeleteTarget(row.original)}
+          >
+            <Trash2 className="size-4" />
+          </Button>
         </div>
       ),
     },
@@ -131,24 +164,123 @@ export default function PlatformUsersPage() {
         user={formState.user}
       />
 
+      {resetTarget && (
+        <ResetPasswordDialog
+          user={resetTarget}
+          open={!!resetTarget}
+          onOpenChange={(open) => !open && setResetTarget(null)}
+        />
+      )}
+
       <ConfirmDialog
-        open={!!disableTarget}
-        onOpenChange={(open) => !open && setDisableTarget(null)}
-        title={`Disable "${disableTarget?.email}"?`}
-        description="They will no longer be able to log in to the CMS."
-        confirmLabel="Disable"
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={`Delete "${deleteTarget?.email}"?`}
+        description="This user will be soft-deleted and will no longer be able to log in."
+        confirmLabel="Delete"
         destructive
-        isLoading={disableMutation.isPending}
+        isLoading={deleteMutation.isPending}
         onConfirm={() => {
-          if (!disableTarget) return
-          disableMutation.mutate(disableTarget.id, {
+          if (!deleteTarget) return
+          deleteMutation.mutate(deleteTarget.id, {
             onSuccess: () => {
-              toast.success('Admin disabled')
-              setDisableTarget(null)
+              toast.success('Admin deleted')
+              setDeleteTarget(null)
             },
           })
         }}
       />
     </div>
+  )
+}
+
+function ResetPasswordDialog({
+  user,
+  open,
+  onOpenChange,
+}: {
+  user: AdminProfile
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const form = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { newPassword: '', confirmPassword: '' },
+  })
+  const resetMutation = useResetAdminPasswordMutation()
+  const [confirmOpen, setConfirmOpen] = useState(false)
+  const [pendingPassword, setPendingPassword] = useState('')
+
+  function onValidSubmit(values: ResetPasswordFormValues) {
+    setPendingPassword(values.newPassword)
+    setConfirmOpen(true)
+  }
+
+  function handleConfirmReset() {
+    resetMutation.mutate(
+      { id: user.id, newPassword: pendingPassword },
+      {
+        onSuccess: () => {
+          toast.success('Password updated')
+          setConfirmOpen(false)
+          onOpenChange(false)
+          form.reset()
+        },
+      }
+    )
+  }
+
+  return (
+    <>
+      <Dialog open={open && !confirmOpen} onOpenChange={onOpenChange}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset password for {user.email}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={form.handleSubmit(onValidSubmit)} noValidate>
+            <FieldGroup>
+              <Field data-invalid={!!form.formState.errors.newPassword}>
+                <FieldLabel htmlFor="reset-new-password">New password</FieldLabel>
+                <PasswordInput
+                  id="reset-new-password"
+                  autoComplete="new-password"
+                  aria-invalid={!!form.formState.errors.newPassword}
+                  {...form.register('newPassword')}
+                />
+                <FieldError errors={[form.formState.errors.newPassword]} />
+              </Field>
+
+              <Field data-invalid={!!form.formState.errors.confirmPassword}>
+                <FieldLabel htmlFor="reset-confirm-password">Confirm new password</FieldLabel>
+                <PasswordInput
+                  id="reset-confirm-password"
+                  autoComplete="new-password"
+                  aria-invalid={!!form.formState.errors.confirmPassword}
+                  {...form.register('confirmPassword')}
+                />
+                <FieldError errors={[form.formState.errors.confirmPassword]} />
+              </Field>
+            </FieldGroup>
+
+            <DialogFooter className="mt-4">
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Ubah</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        title="Yakin ingin diubah?"
+        description={`Password untuk "${user.email}" akan langsung diganti dengan password baru.`}
+        confirmLabel="Ya, ubah password"
+        isLoading={resetMutation.isPending}
+        onConfirm={handleConfirmReset}
+      />
+    </>
   )
 }
