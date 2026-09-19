@@ -1,8 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Package, Search, Rocket, Archive, Check, ChevronsUpDown, X } from 'lucide-react'
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Package,
+  Search,
+  Rocket,
+  Archive,
+  Check,
+  ChevronRight,
+  ChevronsUpDown,
+  X,
+} from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
@@ -28,6 +40,128 @@ import {
 import type { Product as ProductType } from '@/types/api/product.types'
 import type { ProductStatus } from '@/types/common.types'
 
+interface CategoryTreeNode {
+  id: string
+  name: string
+  slug: string
+  parentId: string | null
+  children: CategoryTreeNode[]
+}
+
+function buildCategoryTree(
+  categories: Array<{ id: string; name: string; slug: string; parentId: string | null }>
+): CategoryTreeNode[] {
+  const map = new Map<string, CategoryTreeNode>()
+  categories.forEach((c) => {
+    map.set(c.id, { ...c, children: [] })
+  })
+
+  const roots: CategoryTreeNode[] = []
+  categories.forEach((c) => {
+    const node = map.get(c.id)!
+    if (c.parentId && map.has(c.parentId)) {
+      map.get(c.parentId)!.children.push(node)
+    } else {
+      roots.push(node)
+    }
+  })
+
+  return roots
+}
+
+function nodeOrDescendantMatches(node: CategoryTreeNode, search: string): boolean {
+  if (node.name.toLowerCase().includes(search)) return true
+  return node.children.some((child) => nodeOrDescendantMatches(child, search))
+}
+
+function CategoryTreeItem({
+  node,
+  depth = 0,
+  selectedId,
+  expandedIds,
+  onToggleExpand,
+  onSelect,
+  searchQuery,
+}: {
+  node: CategoryTreeNode
+  depth?: number
+  selectedId: string
+  expandedIds: Set<string>
+  onToggleExpand: (id: string, e: React.MouseEvent) => void
+  onSelect: (id: string) => void
+  searchQuery: string
+}) {
+  const hasChildren = node.children.length > 0
+  const isSearchActive = Boolean(searchQuery.trim())
+  const isExpanded = isSearchActive ? true : expandedIds.has(node.id)
+  const isSelected = selectedId === node.id
+
+  const search = searchQuery.toLowerCase().trim()
+  if (search && !nodeOrDescendantMatches(node, search)) {
+    return null
+  }
+
+  return (
+    <div>
+      <div
+        onClick={() => onSelect(node.id)}
+        className={cn(
+          'group flex w-full items-center justify-between rounded-md py-1.5 pr-2 text-xs transition-colors hover:bg-muted cursor-pointer select-none',
+          isSelected && 'bg-muted font-semibold text-primary'
+        )}
+        style={{ paddingLeft: `${depth * 14 + 6}px` }}
+      >
+        <div className="flex items-center gap-1 min-w-0 flex-1">
+          {hasChildren ? (
+            <button
+              type="button"
+              onClick={(e) => onToggleExpand(node.id, e)}
+              className="flex size-4 shrink-0 items-center justify-center rounded hover:bg-muted-foreground/20 text-muted-foreground transition-transform"
+              title={isExpanded ? 'Collapse' : 'Expand'}
+            >
+              <ChevronRight
+                className={cn(
+                  'size-3.5 transition-transform duration-150',
+                  isExpanded && 'rotate-90'
+                )}
+              />
+            </button>
+          ) : (
+            <span className="size-4 shrink-0" />
+          )}
+          <span className="truncate">{node.name}</span>
+        </div>
+
+        <div className="flex items-center gap-1 shrink-0 ml-1">
+          {hasChildren && !isSearchActive && (
+            <span className="text-[10px] text-muted-foreground/70 font-mono">
+              ({node.children.length})
+            </span>
+          )}
+          {isSelected && <Check className="size-3.5 text-primary" />}
+        </div>
+      </div>
+
+      {hasChildren && isExpanded && (
+        <div className="space-y-0.5">
+          {node.children.map((child) => (
+            <CategoryTreeItem
+              key={child.id}
+              node={child}
+              depth={depth + 1}
+              selectedId={selectedId}
+              expandedIds={expandedIds}
+              onToggleExpand={onToggleExpand}
+              onSelect={onSelect}
+              searchQuery={searchQuery}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const STATUS_VARIANT: Record<ProductStatus, StatusVariant> = {
   draft: 'muted',
   published: 'success',
@@ -48,6 +182,7 @@ export default function ProductsPage() {
   const [categoryId, setCategoryId] = useState<string>('all')
   const [categoryOpen, setCategoryOpen] = useState(false)
   const [categorySearch, setCategorySearch] = useState('')
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search)
   const [deleteTarget, setDeleteTarget] = useState<ProductType | null>(null)
@@ -55,23 +190,49 @@ export default function ProductsPage() {
   const categoriesQuery = useCategoriesQuery()
   const categories = categoriesQuery.data ?? []
   const categoryMap = new Map(categories.map((c) => [c.id, c]))
+  const categoryTree = useMemo(() => buildCategoryTree(categories), [categories])
 
   const selectedCategory = categoryId !== 'all' ? categoryMap.get(categoryId) : null
 
-  const filteredCategories = categories.filter((cat) => {
-    if (!categorySearch.trim()) return true
-    return cat.name.toLowerCase().includes(categorySearch.toLowerCase().trim())
-  })
-
-  function getDepth(cat: (typeof categories)[0]): number {
-    let d = 0
-    let curr = cat.parentId ? categoryMap.get(cat.parentId) : null
-    while (curr && d < 10) {
-      d++
-      curr = curr.parentId ? categoryMap.get(curr.parentId) : null
-    }
-    return d
+  function toggleExpand(id: string, e: React.MouseEvent) {
+    e.stopPropagation()
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
   }
+
+  function expandAll() {
+    const allParentIds = new Set<string>()
+    categories.forEach((c) => {
+      if (c.parentId) allParentIds.add(c.parentId)
+    })
+    setExpandedIds(allParentIds)
+  }
+
+  function collapseAll() {
+    setExpandedIds(new Set())
+  }
+
+  // Auto-expand path to selected category
+  useEffect(() => {
+    if (categoryId && categoryId !== 'all') {
+      const ancestors = new Set<string>()
+      let curr = categoryMap.get(categoryId)
+      while (curr?.parentId) {
+        ancestors.add(curr.parentId)
+        curr = categoryMap.get(curr.parentId)
+      }
+      if (ancestors.size > 0) {
+        setExpandedIds((prev) => new Set([...prev, ...ancestors]))
+      }
+    }
+  }, [categoryId, categoryMap])
 
   const productsQuery = useProductsQuery({
     page,
@@ -202,7 +363,30 @@ export default function ProductsPage() {
               )}
             </div>
 
-            <div className="max-h-60 overflow-y-auto space-y-0.5 pr-1">
+            <div className="flex items-center justify-between px-1 mb-1.5 text-[11px] text-muted-foreground">
+              <span>Pilih Kategori</span>
+              {!categorySearch && (
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  <button
+                    type="button"
+                    onClick={expandAll}
+                    className="hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    Buka semua
+                  </button>
+                  <span>•</span>
+                  <button
+                    type="button"
+                    onClick={collapseAll}
+                    className="hover:text-foreground transition-colors cursor-pointer"
+                  >
+                    Tutup
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="max-h-64 overflow-y-auto space-y-0.5 pr-1">
               <button
                 type="button"
                 onClick={() => {
@@ -220,39 +404,32 @@ export default function ProductsPage() {
                 {categoryId === 'all' && <Check className="size-3.5 text-primary shrink-0" />}
               </button>
 
-              {filteredCategories.length === 0 ? (
+              {categoryTree.filter((root) =>
+                categorySearch.trim()
+                  ? nodeOrDescendantMatches(root, categorySearch.toLowerCase().trim())
+                  : true
+              ).length === 0 ? (
                 <p className="py-4 text-center text-xs text-muted-foreground">
                   Kategori tidak ditemukan
                 </p>
               ) : (
-                filteredCategories.map((cat) => {
-                  const isSelected = categoryId === cat.id
-                  const depth = getDepth(cat)
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={() => {
-                        setCategoryId(cat.id)
-                        setCategoryOpen(false)
-                        setCategorySearch('')
-                        setPage(1)
-                      }}
-                      className={cn(
-                        'w-full flex items-center justify-between rounded-md px-2.5 py-1.5 text-xs text-left transition-colors hover:bg-muted cursor-pointer',
-                        isSelected && 'bg-muted font-semibold text-primary'
-                      )}
-                    >
-                      <span className="truncate">
-                        {!categorySearch && depth > 0 ? `${'— '.repeat(depth)}↳ ` : ''}
-                        {cat.name}
-                      </span>
-                      {isSelected && (
-                        <Check className="size-3.5 text-primary shrink-0 ml-1" />
-                      )}
-                    </button>
-                  )
-                })
+                categoryTree.map((root) => (
+                  <CategoryTreeItem
+                    key={root.id}
+                    node={root}
+                    depth={0}
+                    selectedId={categoryId}
+                    expandedIds={expandedIds}
+                    onToggleExpand={toggleExpand}
+                    onSelect={(id) => {
+                      setCategoryId(id)
+                      setCategoryOpen(false)
+                      setCategorySearch('')
+                      setPage(1)
+                    }}
+                    searchQuery={categorySearch}
+                  />
+                ))
               )}
             </div>
           </PopoverContent>
