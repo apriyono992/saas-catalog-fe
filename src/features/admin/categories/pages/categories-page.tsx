@@ -22,6 +22,10 @@ export default function CategoriesPage() {
 
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null)
 
+  const categoriesById = new Map<string, Category>(
+    categoriesQuery.data?.map((c) => [c.id, c]) ?? []
+  )
+
   const columns: ColumnDef<Category>[] = [
     {
       id: 'image',
@@ -39,7 +43,40 @@ export default function CategoriesPage() {
           </div>
         ),
     },
-    { accessorKey: 'name', header: 'Name' },
+    {
+      accessorKey: 'name',
+      header: 'Nama Kategori',
+      cell: ({ row }) => {
+        const isSub = !!row.original.parentId
+        return (
+          <div className="flex items-center gap-1.5 font-medium">
+            {isSub && <span className="text-muted-foreground font-mono">↳</span>}
+            <span>{row.original.name}</span>
+          </div>
+        )
+      },
+    },
+    {
+      id: 'parent',
+      header: 'Hierarki / Induk',
+      cell: ({ row }) => {
+        const parentId = row.original.parentId
+        if (!parentId) {
+          return (
+            <Badge variant="outline" className="text-[11px] font-semibold text-primary">
+              Kategori Utama
+            </Badge>
+          )
+        }
+        const parent = categoriesById.get(parentId)
+        return (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <span>Subkategori:</span>
+            <strong className="text-foreground font-semibold">{parent?.name ?? 'Induk'}</strong>
+          </div>
+        )
+      },
+    },
     {
       accessorKey: 'slug',
       header: 'Slug',

@@ -31,6 +31,14 @@ export interface PlatformStoreSettings {
   socialFacebook: string | null
   socialTiktok: string | null
   socialWhatsapp: string | null
+  bannerUrl: string | null
+  navbarColor: string | null
+  buttonColor: string | null
+  buttonTextColor: string | null
+  categoryTitle: string | null
+  cardColor: string | null
+  cardSectionColor: string | null
+  defaultStrikePercentage: string | null
   createdAt: string
   updatedAt: string
 }
@@ -43,6 +51,14 @@ export interface UpdatePlatformStoreSettingsDto {
   socialFacebook?: string
   socialTiktok?: string
   socialWhatsapp?: string
+  navbarColor?: string
+  buttonColor?: string
+  buttonTextColor?: string
+  bannerUrl?: string
+  categoryTitle?: string
+  cardColor?: string
+  cardSectionColor?: string
+  defaultStrikePercentage?: string
 }
 
 export interface AdminProfile {

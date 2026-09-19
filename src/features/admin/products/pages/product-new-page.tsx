@@ -12,7 +12,7 @@ export default function ProductNewPage() {
     <div>
       <PageHeader title="New product" description="Create a draft product, then add images and details." />
       <ProductDetailsForm
-        defaultValues={{ name: '', slug: '', description: '', categoryId: '', basePrice: '' }}
+        defaultValues={{ name: '', slug: '', description: '', categoryId: '', basePrice: '', strikePrice: '' }}
         submitLabel="Create product"
         isPending={createMutation.isPending}
         onSubmit={(values) => {
@@ -22,7 +22,9 @@ export default function ProductNewPage() {
               slug: values.slug || undefined,
               description: values.description || undefined,
               categoryId: values.categoryId || undefined,
+              categoryIds: values.categoryIds && values.categoryIds.length > 0 ? values.categoryIds : undefined,
               basePrice: values.basePrice || undefined,
+              strikePrice: values.strikePrice || undefined,
             },
             {
               onSuccess: (product) => {

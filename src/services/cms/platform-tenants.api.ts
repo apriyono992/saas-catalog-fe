@@ -53,3 +53,23 @@ export function createTenantDomain(id: string, hostname: string) {
 export function deleteTenantDomain(tenantId: string, domainId: string) {
   return cmsClient.delete(`/cms/platform/tenants/${tenantId}/domains/${domainId}`)
 }
+
+export function verifyTenantDomain(tenantId: string, domainId: string) {
+  return cmsClient
+    .post<Domain>(`/cms/platform/tenants/${tenantId}/domains/${domainId}/verify`)
+    .then((res) => res.data)
+}
+
+export function uploadTenantBanner(tenantId: string, file: File) {
+  const formData = new FormData()
+  formData.append('file', file)
+  return cmsClient
+    .post<PlatformStoreSettings>(`/cms/platform/tenants/${tenantId}/store-settings/banner`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    .then((res) => res.data)
+}
+
+export function deleteTenantBanner(tenantId: string) {
+  return cmsClient.delete(`/cms/platform/tenants/${tenantId}/store-settings/banner`)
+}

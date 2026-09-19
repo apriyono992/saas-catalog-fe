@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Link2, Pencil, Plus, Trash2 } from 'lucide-react'
+import { Globe, Link2, Pencil, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/common/empty-state'
 import { ConfirmDialog } from '@/components/common/confirm-dialog'
+import { resolveAssetUrl } from '@/lib/resolve-asset-url'
 import { MarketplaceLinkFormDialog } from '@/features/admin/products/components/marketplace-link-form-dialog'
 import { useDeleteMarketplaceLinkMutation } from '@/features/admin/products/api/marketplace-links.queries'
 import type { MarketplaceLink } from '@/types/api/product.types'
@@ -38,9 +39,22 @@ export function ProductMarketplaceLinksTab({ productId, links }: ProductMarketpl
         <div className="divide-y divide-border rounded-lg border border-border">
           {links.map((link) => (
             <div key={link.id} className="flex items-center justify-between gap-4 p-3">
-              <div className="min-w-0">
-                <p className="font-medium">{link.marketplaceName}</p>
-                <p className="truncate text-sm text-muted-foreground">{link.url}</p>
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="size-8 rounded-lg border bg-muted/40 flex items-center justify-center shrink-0 p-1">
+                  {link.marketplace?.iconUrl ? (
+                    <img
+                      src={resolveAssetUrl(link.marketplace.iconUrl)}
+                      alt=""
+                      className="size-full object-contain"
+                    />
+                  ) : (
+                    <Globe className="size-4 text-muted-foreground" />
+                  )}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium text-sm">{link.marketplaceName}</p>
+                  <p className="truncate text-xs text-muted-foreground">{link.url}</p>
+                </div>
               </div>
               <div className="flex shrink-0 gap-1">
                 <Button

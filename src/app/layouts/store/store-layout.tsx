@@ -7,11 +7,13 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { ThemeToggle } from '@/components/layout/theme-toggle'
 import { useStoreProfileQuery } from '@/features/store/shared/api/store-profile.queries'
 import { useFavoritesStore } from '@/stores/favorites-store'
+import { useTheme } from '@/hooks/use-theme'
 import { cn } from '@/lib/utils'
 
 const NAV_LINKS = [
   { to: '/', label: 'Home', end: true },
   { to: '/catalog', label: 'Catalog', end: false },
+  { to: '/categories', label: 'Categories', end: false },
   { to: '/about', label: 'About', end: false },
 ]
 
@@ -59,6 +61,8 @@ export function StoreLayout() {
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const storeName = profileQuery.data?.name ?? 'Store'
   const favoriteCount = useFavoritesStore((s) => s.ids.length)
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
 
   function handleSearchSubmit(event: FormEvent, closeSheet?: boolean) {
     event.preventDefault()
@@ -67,8 +71,47 @@ export function StoreLayout() {
   }
 
   return (
-    <div className="flex min-h-svh flex-col">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#2d3336] backdrop-blur dark:border-border dark:bg-background/95 dark:supports-backdrop-filter:bg-background/60">
+    <div
+      className="storefront-root flex min-h-svh flex-col"
+      style={
+        !isDark && profileQuery.data
+          ? ({
+              ...(profileQuery.data.buttonColor ? { '--primary': profileQuery.data.buttonColor } : {}),
+              ...(profileQuery.data.buttonTextColor
+                ? { '--primary-foreground': profileQuery.data.buttonTextColor }
+                : {}),
+            } as React.CSSProperties)
+          : undefined
+      }
+    >
+      {!isDark && (
+        <style>{`
+          ${profileQuery.data?.buttonColor ? `
+            html:not(.dark) .storefront-root button.bg-primary,
+            html:not(.dark) .storefront-root a.bg-primary,
+            html:not(.dark) .storefront-root [data-variant="default"],
+            html:not(.dark) .storefront-root .bg-primary {
+              background-color: ${profileQuery.data.buttonColor} !important;
+              color: ${profileQuery.data.buttonTextColor || '#ffffff'} !important;
+            }
+          ` : ''}
+          ${profileQuery.data?.cardColor ? `
+            html:not(.dark) .storefront-root .store-card {
+              background-color: ${profileQuery.data.cardColor} !important;
+            }
+          ` : ''}
+          ${profileQuery.data?.cardSectionColor ? `
+            html:not(.dark) .storefront-root .store-card-section {
+              background-color: ${profileQuery.data.cardSectionColor} !important;
+            }
+          ` : ''}
+        `}</style>
+      )}
+
+      <header
+        className="sticky top-0 z-40 border-b border-white/10 bg-[#2d3336] backdrop-blur dark:border-border dark:bg-background/95 dark:supports-backdrop-filter:bg-background/60 transition-colors"
+        style={!isDark && profileQuery.data?.navbarColor ? { backgroundColor: profileQuery.data.navbarColor } : undefined}
+      >
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-4 px-4">
           <Link
             to="/"

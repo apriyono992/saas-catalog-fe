@@ -4,6 +4,7 @@ const slugPattern = /^[a-z0-9]+(-[a-z0-9]+)*$/
 
 export const categorySchema = z.object({
   name: z.string().min(1, 'Name is required').max(150, 'Name must be 150 characters or fewer'),
+  parentId: z.string().optional().or(z.literal('')),
   slug: z
     .string()
     .max(160, 'Slug must be 160 characters or fewer')

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, Package, Search, MoreHorizontal, Rocket, Archive } from 'lucide-react'
+import { Plus, Pencil, Trash2, Package, Search, Rocket, Archive } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { PageHeader } from '@/components/common/page-header'
 import { DataTable } from '@/components/common/data-table'
@@ -14,14 +14,9 @@ import { StatusBadge, type StatusVariant } from '@/components/common/status-badg
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { useDebouncedValue } from '@/hooks/use-debounced-value'
 import { formatCurrency } from '@/utils/format-currency'
+import { useCategoriesQuery } from '@/features/admin/categories/api/categories.queries'
 import {
   useArchiveProductMutation,
   useDeleteProductMutation,
@@ -48,20 +43,49 @@ export default function ProductsPage() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [status, setStatus] = useState<ProductStatus | 'all'>('all')
+  const [categoryId, setCategoryId] = useState<string>('all')
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search)
   const [deleteTarget, setDeleteTarget] = useState<ProductType | null>(null)
+
+  const categoriesQuery = useCategoriesQuery()
+  const categories = categoriesQuery.data ?? []
+  const categoryMap = new Map(categories.map((c) => [c.id, c]))
+
+  function getDepth(cat: (typeof categories)[0]): number {
+    let d = 0
+    let curr = cat.parentId ? categoryMap.get(cat.parentId) : null
+    while (curr && d < 10) {
+      d++
+      curr = curr.parentId ? categoryMap.get(curr.parentId) : null
+    }
+    return d
+  }
 
   const productsQuery = useProductsQuery({
     page,
     limit: 20,
     status: status === 'all' ? undefined : status,
+    categoryId: categoryId === 'all' ? undefined : categoryId,
     search: debouncedSearch || undefined,
   })
   const deleteMutation = useDeleteProductMutation()
 
   const columns: ColumnDef<ProductType>[] = [
     { accessorKey: 'name', header: 'Name' },
+    {
+      id: 'category',
+      header: 'Category',
+      cell: ({ row }) => {
+        const catId = row.original.categoryId
+        const cat = catId ? categoryMap.get(catId) : null
+        return cat ? (
+          <span className="text-xs font-medium text-foreground">{cat.name}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground/60">—</span>
+        )
+      },
+    },
     { accessorKey: 'slug', header: 'Slug' },
     {
       accessorKey: 'basePrice',
@@ -111,6 +135,7 @@ export default function ProductsPage() {
             }}
           />
         </div>
+
         <Select
           value={status}
           onValueChange={(value) => {
@@ -118,7 +143,7 @@ export default function ProductsPage() {
             setPage(1)
           }}
         >
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-36">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -127,6 +152,30 @@ export default function ProductsPage() {
                 {option.label}
               </SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={categoryId}
+          onValueChange={(value) => {
+            setCategoryId(value)
+            setPage(1)
+          }}
+        >
+          <SelectTrigger className="w-56">
+            <SelectValue placeholder="Semua kategori" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Semua Kategori</SelectItem>
+            {categories.map((cat) => {
+              const depth = getDepth(cat)
+              return (
+                <SelectItem key={cat.id} value={cat.id}>
+                  {depth > 0 ? `${'— '.repeat(depth)}↳ ` : ''}
+                  {cat.name}
+                </SelectItem>
+              )
+            })}
           </SelectContent>
         </Select>
       </div>
@@ -165,7 +214,7 @@ export default function ProductsPage() {
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title={`Delete "${deleteTarget?.name}"?`}
-        description="This can't be undone. Only draft products can be deleted."
+        description="Produk yang dihapus tidak akan ditampilkan lagi di katalog dan etalase."
         confirmLabel="Delete"
         destructive
         isLoading={deleteMutation.isPending}
@@ -189,49 +238,59 @@ function ProductRowActions({ product, onDelete }: { product: ProductType; onDele
   const archiveMutation = useArchiveProductMutation(product.id)
 
   return (
-    <div className="flex justify-end">
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon-sm" aria-label="Product actions">
-            <MoreHorizontal className="size-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => navigate(`/products/${product.id}`)}>
-            <Pencil className="size-4" />
-            Edit
-          </DropdownMenuItem>
+    <div className="flex justify-end gap-1">
+      {product.status === 'published' ? (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Archive product"
+          title="Arsipkan produk"
+          disabled={archiveMutation.isPending}
+          onClick={() =>
+            archiveMutation.mutate(undefined, {
+              onSuccess: () => toast.success('Produk diarsipkan'),
+            })
+          }
+        >
+          <Archive className="size-4" />
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Publish product"
+          title="Publikasikan produk"
+          disabled={publishMutation.isPending}
+          onClick={() =>
+            publishMutation.mutate(undefined, {
+              onSuccess: () => toast.success('Produk dipublikasikan'),
+            })
+          }
+        >
+          <Rocket className="size-4" />
+        </Button>
+      )}
 
-          {(product.status === 'draft' || product.status === 'archived') && (
-            <DropdownMenuItem
-              onClick={() =>
-                publishMutation.mutate(undefined, { onSuccess: () => toast.success('Product published') })
-              }
-            >
-              <Rocket className="size-4" />
-              Publish
-            </DropdownMenuItem>
-          )}
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Edit product"
+        title="Edit produk"
+        onClick={() => navigate(`/products/${product.id}`)}
+      >
+        <Pencil className="size-4" />
+      </Button>
 
-          {product.status === 'published' && (
-            <DropdownMenuItem
-              onClick={() =>
-                archiveMutation.mutate(undefined, { onSuccess: () => toast.success('Product archived') })
-              }
-            >
-              <Archive className="size-4" />
-              Archive
-            </DropdownMenuItem>
-          )}
-
-          {product.status === 'draft' && (
-            <DropdownMenuItem variant="destructive" onClick={onDelete}>
-              <Trash2 className="size-4" />
-              Delete
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        aria-label="Delete product"
+        title="Hapus produk"
+        className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+        onClick={onDelete}
+      >
+        <Trash2 className="size-4" />
+      </Button>
     </div>
   )
 }

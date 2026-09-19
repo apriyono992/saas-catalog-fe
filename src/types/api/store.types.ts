@@ -11,6 +11,19 @@ export interface CategoryListItem {
   name: string
   slug: string
   imageUrl: string | null
+  parentId: string | null
+  childrenCount?: number
+}
+
+export interface StoreCategoryDetail {
+  id: string
+  name: string
+  slug: string
+  imageUrl: string | null
+  parentId: string | null
+  depth: number
+  ancestors: { id: string; name: string; slug: string }[]
+  children: { id: string; name: string; slug: string; imageUrl: string | null }[]
 }
 
 export interface StoreProfile {
@@ -22,6 +35,14 @@ export interface StoreProfile {
   socialFacebook: string | null
   socialTiktok: string | null
   socialWhatsapp: string | null
+  bannerUrl: string | null
+  navbarColor: string | null
+  buttonColor: string | null
+  buttonTextColor: string | null
+  categoryTitle: string | null
+  cardColor: string | null
+  cardSectionColor: string | null
+  defaultStrikePercentage: string | null
 }
 
 export interface ResolvedTenant {
@@ -34,6 +55,7 @@ export interface ProductListItem {
   name: string
   slug: string
   basePrice: string
+  strikePrice: string | null
   thumbnailUrl: string | null
   category: StoreCategoryRef | null
 }
@@ -50,6 +72,7 @@ export interface ProductVariantTypeView {
 export interface ProductMarketplaceLinkView {
   id: string
   marketplaceName: string
+  iconUrl: string | null
 }
 
 export interface ProductDetail {
@@ -58,8 +81,10 @@ export interface ProductDetail {
   slug: string
   description: string | null
   basePrice: string
+  strikePrice: string | null
   images: string[]
   category: StoreCategoryRef | null
+  categories: StoreCategoryRef[]
   variantTypes: ProductVariantTypeView[]
   marketplaceLinks: ProductMarketplaceLinkView[]
 }

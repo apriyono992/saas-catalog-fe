@@ -9,6 +9,7 @@ export interface Product {
   slug: string
   description: string | null
   basePrice: string | null
+  strikePrice: string | null
   status: ProductStatus
   createdAt: string
   updatedAt: string
@@ -39,16 +40,25 @@ export interface VariantOption {
 export interface MarketplaceLink {
   id: string
   productId: string
+  marketplaceId?: string | null
   marketplaceName: string
   url: string
   sortOrder: number
   createdAt: string
+  marketplace?: {
+    id: string
+    name: string
+    slug: string
+    iconUrl: string | null
+  } | null
 }
 
 /** `GET /cms/products/:id` shape — includes nested relations. */
 export interface ProductWithRelations extends Product {
   images: ProductImage[]
   category: StoreCategoryRef | null
+  productCategories?: { category: StoreCategoryRef }[]
+  categories?: StoreCategoryRef[]
   variantTypes: (VariantType & { options: VariantOption[] })[]
   marketplaceLinks: MarketplaceLink[]
 }
@@ -58,6 +68,7 @@ export interface AdminListProductsQuery {
   limit?: number
   status?: ProductStatus
   search?: string
+  categoryId?: string
 }
 
 export interface CreateProductDto {
@@ -65,7 +76,9 @@ export interface CreateProductDto {
   slug?: string
   description?: string
   categoryId?: string
+  categoryIds?: string[]
   basePrice?: string
+  strikePrice?: string
 }
 
 export type UpdateProductDto = Partial<CreateProductDto>
@@ -93,11 +106,13 @@ export interface UpdateVariantOptionDto {
 }
 
 export interface CreateMarketplaceLinkDto {
+  marketplaceId?: string
   marketplaceName: string
   url: string
 }
 
 export interface UpdateMarketplaceLinkDto {
+  marketplaceId?: string
   marketplaceName?: string
   url?: string
 }

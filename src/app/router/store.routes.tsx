@@ -4,6 +4,7 @@ import { StoreLayout } from '@/app/layouts/store/store-layout'
 
 const HomePage = lazy(() => import('@/features/store/home/pages/home-page'))
 const CatalogPage = lazy(() => import('@/features/store/catalog/pages/catalog-page'))
+const StoreCategoriesPage = lazy(() => import('@/features/store/category/pages/store-categories-page'))
 const CategoryPage = lazy(() => import('@/features/store/category/pages/category-page'))
 const ProductPage = lazy(() => import('@/features/store/product/pages/product-page'))
 const FavoritesPage = lazy(() => import('@/features/store/favorites/pages/favorites-page'))
@@ -16,6 +17,7 @@ export function StoreRoutes() {
       <Route element={<StoreLayout />}>
         <Route index element={<HomePage />} />
         <Route path="/catalog" element={<CatalogPage />} />
+        <Route path="/categories" element={<StoreCategoriesPage />} />
         <Route path="/category/:slug" element={<CategoryPage />} />
         <Route path="/products/:slug" element={<ProductPage />} />
         <Route path="/favorites" element={<FavoritesPage />} />

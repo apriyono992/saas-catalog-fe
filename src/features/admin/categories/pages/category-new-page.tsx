@@ -12,12 +12,16 @@ export default function CategoryNewPage() {
     <div>
       <PageHeader title="New category" description="Create a category, then add an image." />
       <CategoryDetailsForm
-        defaultValues={{ name: '', slug: '' }}
+        defaultValues={{ name: '', slug: '', parentId: '' }}
         submitLabel="Create category"
         isPending={createMutation.isPending}
         onSubmit={(values) => {
           createMutation.mutate(
-            { name: values.name, slug: values.slug || undefined },
+            {
+              name: values.name,
+              slug: values.slug || undefined,
+              parentId: values.parentId || undefined,
+            },
             {
               onSuccess: (category) => {
                 toast.success('Category created')

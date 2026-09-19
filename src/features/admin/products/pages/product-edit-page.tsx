@@ -60,7 +60,14 @@ export default function ProductEditPage() {
               slug: product.slug,
               description: product.description ?? '',
               categoryId: product.categoryId ?? '',
+              categoryIds:
+                product.productCategories && product.productCategories.length > 0
+                  ? product.productCategories.map((pc) => pc.category.id)
+                  : product.categoryId
+                    ? [product.categoryId]
+                    : [],
               basePrice: product.basePrice ?? '',
+              strikePrice: product.strikePrice ?? '',
             }}
             submitLabel="Save changes"
             isPending={updateMutation.isPending}
@@ -71,7 +78,9 @@ export default function ProductEditPage() {
                   slug: values.slug || undefined,
                   description: values.description || undefined,
                   categoryId: values.categoryId || undefined,
+                  categoryIds: values.categoryIds,
                   basePrice: values.basePrice || undefined,
+                  strikePrice: values.strikePrice || undefined,
                 },
                 { onSuccess: () => toast.success('Product updated') }
               )

@@ -3,6 +3,7 @@ import {
   activateTenant,
   createTenant,
   createTenantDomain,
+  deleteTenantBanner,
   deleteTenantDomain,
   getTenantStoreSettings,
   listTenantDomains,
@@ -10,6 +11,8 @@ import {
   suspendTenant,
   updateTenant,
   updateTenantStoreSettings,
+  uploadTenantBanner,
+  verifyTenantDomain,
 } from '@/services/cms/platform-tenants.api'
 import type { CreateTenantDto, UpdatePlatformStoreSettingsDto, UpdateTenantDto } from '@/types/api/platform.types'
 
@@ -78,6 +81,14 @@ export function useDeleteTenantDomainMutation(tenantId: string) {
   })
 }
 
+export function useVerifyTenantDomainMutation(tenantId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (domainId: string) => verifyTenantDomain(tenantId, domainId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tenantKeys.domains(tenantId) }),
+  })
+}
+
 export function useSuspendTenantMutation() {
   const queryClient = useQueryClient()
   return useMutation({
@@ -91,5 +102,21 @@ export function useActivateTenantMutation() {
   return useMutation({
     mutationFn: (id: string) => activateTenant(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: tenantKeys.list() }),
+  })
+}
+
+export function useUploadTenantBannerMutation(tenantId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => uploadTenantBanner(tenantId, file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tenantKeys.storeSettings(tenantId) }),
+  })
+}
+
+export function useDeleteTenantBannerMutation(tenantId: string) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => deleteTenantBanner(tenantId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: tenantKeys.storeSettings(tenantId) }),
   })
 }

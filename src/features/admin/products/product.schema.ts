@@ -13,9 +13,15 @@ export const productSchema = z.object({
     .or(z.literal('')),
   description: z.string().optional().or(z.literal('')),
   categoryId: z.string().optional(),
+  categoryIds: z.array(z.string()).optional(),
   basePrice: z
     .string()
     .regex(pricePattern, 'Enter a valid price, e.g. 150000 or 150000.50')
+    .optional()
+    .or(z.literal('')),
+  strikePrice: z
+    .string()
+    .regex(pricePattern, 'Enter a valid price, e.g. 200000 or 200000.50')
     .optional()
     .or(z.literal('')),
 })

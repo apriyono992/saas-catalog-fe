@@ -33,12 +33,20 @@ export default function CategoryEditPage() {
 
       <h2 className="mb-4 text-sm font-medium text-muted-foreground">Details</h2>
       <CategoryDetailsForm
-        defaultValues={{ name: category.name, slug: category.slug }}
+        currentCategoryId={category.id}
+        defaultValues={{ name: category.name, slug: category.slug, parentId: category.parentId ?? '' }}
         submitLabel="Save changes"
         isPending={updateMutation.isPending}
         onSubmit={(values) => {
           updateMutation.mutate(
-            { id: category.id, dto: { name: values.name, slug: values.slug || undefined } },
+            {
+              id: category.id,
+              dto: {
+                name: values.name,
+                slug: values.slug || undefined,
+                parentId: values.parentId || null,
+              },
+            },
             { onSuccess: () => toast.success('Category updated') }
           )
         }}

@@ -16,14 +16,15 @@ const CategoryEditPage = lazy(() => import('@/features/admin/categories/pages/ca
 const ProductsPage = lazy(() => import('@/features/admin/products/pages/products-page'))
 const ProductNewPage = lazy(() => import('@/features/admin/products/pages/product-new-page'))
 const ProductEditPage = lazy(() => import('@/features/admin/products/pages/product-edit-page'))
-const DomainsPage = lazy(() => import('@/features/admin/domains/pages/domains-page'))
 const SettingsPage = lazy(() => import('@/features/admin/settings/pages/settings-page'))
+const AppearancePage = lazy(() => import('@/features/admin/appearance/pages/appearance-page'))
 const ProfilePage = lazy(() => import('@/features/admin/profile/pages/profile-page'))
 const AnalyticsPage = lazy(() => import('@/features/admin/analytics/pages/analytics-page'))
 const ActivityLogsPage = lazy(() => import('@/features/admin/activity-logs/pages/activity-logs-page'))
 const TenantsPage = lazy(() => import('@/features/admin/tenants/pages/tenants-page'))
 const TenantDetailPage = lazy(() => import('@/features/admin/tenants/pages/tenant-detail-page'))
 const PlatformUsersPage = lazy(() => import('@/features/admin/users/pages/platform-users-page'))
+const PlatformMarketplacesPage = lazy(() => import('@/features/admin/marketplaces/pages/platform-marketplaces-page'))
 const CmsNotFoundPage = lazy(() => import('@/features/admin/shared/pages/not-found-page'))
 
 function RoleLandingRedirect() {
@@ -53,8 +54,8 @@ export function CmsRoutes() {
             <Route path="/categories" element={<CategoriesPage />} />
             <Route path="/categories/new" element={<CategoryNewPage />} />
             <Route path="/categories/:id" element={<CategoryEditPage />} />
-            <Route path="/domains" element={<DomainsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/appearance" element={<AppearancePage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/activity-logs" element={<ActivityLogsPage />} />
           </Route>
@@ -63,6 +64,7 @@ export function CmsRoutes() {
             <Route path="/tenants" element={<TenantsPage />} />
             <Route path="/tenants/:id" element={<TenantDetailPage />} />
             <Route path="/users" element={<PlatformUsersPage />} />
+            <Route path="/marketplaces" element={<PlatformMarketplacesPage />} />
           </Route>
 
           <Route path="*" element={<CmsNotFoundPage />} />

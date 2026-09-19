@@ -1,11 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  deleteStoreBanner,
   getStoreSettings,
   updateStoreSettings,
+  updateStoreSettingsAppearance,
   updateStoreSettingsContact,
   updateStoreSettingsSocial,
+  uploadStoreBanner,
 } from '@/services/cms/store-settings.api'
 import type {
+  UpdateStoreSettingsAppearanceDto,
   UpdateStoreSettingsContactDto,
   UpdateStoreSettingsDto,
   UpdateStoreSettingsSocialDto,
@@ -42,3 +46,28 @@ export function useUpdateStoreSettingsSocialMutation() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: storeSettingsKeys.all }),
   })
 }
+
+export function useUpdateStoreSettingsAppearanceMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (dto: UpdateStoreSettingsAppearanceDto) => updateStoreSettingsAppearance(dto),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: storeSettingsKeys.all }),
+  })
+}
+
+export function useUploadStoreBannerMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (file: File) => uploadStoreBanner(file),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: storeSettingsKeys.all }),
+  })
+}
+
+export function useDeleteStoreBannerMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => deleteStoreBanner(),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: storeSettingsKeys.all }),
+  })
+}
+

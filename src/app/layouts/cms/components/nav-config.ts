@@ -2,12 +2,13 @@ import {
   LayoutDashboard,
   Package,
   FolderTree,
-  Globe,
   Settings,
+  Palette,
   BarChart3,
   History,
   Building2,
   Users,
+  Store,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { Role } from '@/types/common.types'
@@ -32,7 +33,6 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/products', label: 'Products', icon: Package },
       { to: '/categories', label: 'Categories', icon: FolderTree },
-      { to: '/domains', label: 'Domains', icon: Globe },
     ],
   },
   {
@@ -44,7 +44,10 @@ export const ADMIN_NAV_GROUPS: NavGroup[] = [
   },
   {
     label: 'Workspace',
-    items: [{ to: '/settings', label: 'Settings', icon: Settings }],
+    items: [
+      { to: '/settings', label: 'Settings', icon: Settings },
+      { to: '/appearance', label: 'Appearance', icon: Palette },
+    ],
   },
 ]
 
@@ -53,6 +56,7 @@ export const SUPERADMIN_NAV_GROUPS: NavGroup[] = [
     items: [
       { to: '/tenants', label: 'Tenants', icon: Building2 },
       { to: '/users', label: 'Admin users', icon: Users },
+      { to: '/marketplaces', label: 'Marketplaces', icon: Store },
     ],
   },
 ]

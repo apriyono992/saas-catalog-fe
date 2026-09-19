@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import { format } from 'date-fns'
-import { MousePointerClick, Package, FolderTree, Globe } from 'lucide-react'
+import { MousePointerClick, Package, FolderTree, Palette } from 'lucide-react'
 import { PageHeader } from '@/components/common/page-header'
 import { EmptyState } from '@/components/common/empty-state'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -57,10 +57,10 @@ export default function DashboardPage() {
                 Categories
               </Badge>
             </Link>
-            <Link to="/domains" className="flex-1">
+            <Link to="/appearance" className="flex-1">
               <Badge variant="secondary" className="w-full justify-center py-1.5">
-                <Globe className="size-3.5" />
-                Domains
+                <Palette className="size-3.5" />
+                Appearance
               </Badge>
             </Link>
           </CardContent>

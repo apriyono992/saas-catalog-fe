@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useParams } from 'react-router-dom'
 import { toast } from 'sonner'
-import { ArrowLeft, Globe, Plus, Trash2 } from 'lucide-react'
+import { ArrowLeft, Globe, Plus, ShieldCheck, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { z } from 'zod'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -29,7 +29,11 @@ import {
   useUpdateTenantStoreSettingsMutation,
   useCreateTenantDomainMutation,
   useDeleteTenantDomainMutation,
+  useUploadTenantBannerMutation,
+  useDeleteTenantBannerMutation,
+  useVerifyTenantDomainMutation,
 } from '@/features/admin/tenants/api/tenants.queries'
+import { AppearanceForm } from '@/features/admin/appearance/components/appearance-form'
 import { domainSchema, type DomainFormValues } from '@/features/admin/domains/domain.schema'
 import type { PlatformStoreSettings, UpdatePlatformStoreSettingsDto } from '@/types/api/platform.types'
 import type { Domain } from '@/types/api/domain.types'
@@ -59,6 +63,10 @@ export default function TenantDetailPage() {
   const tenant = tenantsQuery.data?.find((t) => t.id === id)
   const isLoading = tenantsQuery.isPending || storeSettingsQuery.isPending || domainsQuery.isPending
   const isError = tenantsQuery.isError || storeSettingsQuery.isError || domainsQuery.isError
+
+  const updateStoreSettingsMutation = useUpdateTenantStoreSettingsMutation(id!)
+  const uploadBannerMutation = useUploadTenantBannerMutation(id!)
+  const deleteBannerMutation = useDeleteTenantBannerMutation(id!)
 
   return (
     <div>
@@ -92,6 +100,7 @@ export default function TenantDetailPage() {
             <TabsTrigger value="info">Info</TabsTrigger>
             <TabsTrigger value="domains">Domains</TabsTrigger>
             <TabsTrigger value="store-settings">Store settings</TabsTrigger>
+            <TabsTrigger value="appearance">Appearance</TabsTrigger>
           </TabsList>
 
           <TabsContent value="info" className="pt-4">
@@ -105,6 +114,32 @@ export default function TenantDetailPage() {
           <TabsContent value="store-settings" className="pt-4">
             {storeSettingsQuery.data && (
               <StoreSettingsForm id={id!} settings={storeSettingsQuery.data} />
+            )}
+          </TabsContent>
+
+          <TabsContent value="appearance" className="pt-4">
+            {storeSettingsQuery.data && (
+              <AppearanceForm
+                settings={storeSettingsQuery.data}
+                isSaving={updateStoreSettingsMutation.isPending}
+                onSave={(values) => {
+                  updateStoreSettingsMutation.mutate(values, {
+                    onSuccess: () => toast.success('Tampilan toko berhasil disimpan'),
+                  })
+                }}
+                onUploadBanner={(file) => {
+                  uploadBannerMutation.mutate(file, {
+                    onSuccess: () => toast.success('Banner toko berhasil diunggah'),
+                  })
+                }}
+                isUploadingBanner={uploadBannerMutation.isPending}
+                onDeleteBanner={() => {
+                  deleteBannerMutation.mutate(undefined, {
+                    onSuccess: () => toast.success('Banner toko berhasil dihapus'),
+                  })
+                }}
+                isDeletingBanner={deleteBannerMutation.isPending}
+              />
             )}
           </TabsContent>
         </Tabs>
@@ -153,6 +188,7 @@ function DomainsTab({ id, domains }: { id: string; domains: Domain[] }) {
   const [addOpen, setAddOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Domain | null>(null)
   const deleteMutation = useDeleteTenantDomainMutation(id)
+  const verifyMutation = useVerifyTenantDomainMutation(id)
 
   const columns: ColumnDef<Domain>[] = [
     {
@@ -184,7 +220,22 @@ function DomainsTab({ id, domains }: { id: string; domains: Domain[] }) {
       id: 'actions',
       header: '',
       cell: ({ row }) => (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-1">
+          {!row.original.verifiedAt && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              aria-label="Verify domain"
+              disabled={verifyMutation.isPending}
+              onClick={() =>
+                verifyMutation.mutate(row.original.id, {
+                  onSuccess: () => toast.success('Domain verified'),
+                })
+              }
+            >
+              <ShieldCheck className="size-4" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon-sm"
